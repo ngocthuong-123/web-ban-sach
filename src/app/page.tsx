@@ -1,103 +1,185 @@
-import Image from "next/image";
+"use client";
+import { useEffect, useState } from "react";
+import { getBooksByCategory } from "./services/api/books";
+import { getCategories } from "./services/api/category";
+import { Book } from "./types/Book";
+import { Category } from "./types/Category";
+import { getToken, getSessionId } from "./utils/storage";
+import { addToCart, addToCartGuest } from "./services/api/cart";
+import { showError, showSuccess } from "./utils/toast";
+import { useSearchContext } from "./context/SearchContext";
+import { getCartCount, getGuestCartCount } from "./services/api/header";
+import { useAppContext } from "./context/AppContext";
+import { useCountdown } from "./hooks/useCountdown";
+import Link from "next/link";
+import ZaloIcon from "./components/ZaloIcon";
+// import SearchResults from "./components/home/SearchResults";
+// import CategorySection from "./components/home/CategorySection";
+// import FlashSaleSection from "./components/home/FlashSaleSection";
+import { Suspense } from "react";
+import dynamic from "next/dynamic";
+import {
+  SearchResultsSkeleton,
+  BannerSkeleton,
+  FlashSaleSkeleton,
+  CategorySkeleton,
+} from "./components/LoadingSkeleton";
+const SearchResults = dynamic(() => import("./components/home/SearchResults"), {
+  loading: () => <SearchResultsSkeleton />,
+  ssr: false,
+});
 
-export default function Home() {
+const BannerSection = dynamic(() => import("./components/home/BannerSection"), {
+  loading: () => <BannerSkeleton />,
+  ssr: false,
+});
+
+const FlashSaleSection = dynamic(() => import("./components/home/FlashSaleSection"), {
+  loading: () => <FlashSaleSkeleton />,
+  ssr: false,
+});
+
+const CategorySection = dynamic(() => import("./components/home/CategorySection"), {
+  loading: () => <CategorySkeleton />,
+  ssr: false,
+});
+// const BannerSection = dynamic(() => import("./components/home/BannerSection"), { ssr: false });
+
+const Home = () => {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [booksByCategoryMap, setBooksByCategoryMap] = useState<Record<string, Book[]>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [token, setToken] = useState<string | null>(null);
+  const { searchQuery, searchResults, setSearchQuery, setSearchResults } = useSearchContext();
+  // const { setCartCount } = useAppContext();
+  const { setCartCount, refreshCartCount } = useAppContext();
+
+
+  useEffect(() => {
+    const savedToken = getToken();
+    setToken(savedToken);
+  }, []);
+
+useEffect(() => {
+  const fetchInitial = async () => {
+    try {
+      const catRes = await getCategories();
+      const allCategories = catRes.data;
+
+      const childCategories: Category[] = [];
+      for (const parent of allCategories) {
+        if (parent.children && parent.children.length > 0) {
+          const childrenWithParent = parent.children.map((child: Category) => ({
+            ...child,
+            parentName: parent.name,
+          }));
+          childCategories.push(...childrenWithParent);
+        }
+      }
+      setCategories(childCategories);
+
+      // 🔁 Gọi song song các API getBooksByCategory
+      const bookFetchPromises = childCategories.map((category) =>
+        getBooksByCategory(category.slug, 1, 5).then((res) => ({
+          slug: category.slug,
+          books: res.data.data,
+        }))
+      );
+
+      const booksResponses = await Promise.all(bookFetchPromises);
+      const booksMap: Record<string, Book[]> = {};
+      booksResponses.forEach(({ slug, books }) => {
+        booksMap[slug] = books;
+      });
+
+      setBooksByCategoryMap(booksMap);
+    } catch (err) {
+      console.error("Lỗi khi tải dữ liệu:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  fetchInitial();
+}, []);
+
+
+  const handleCloseSearch = () => {
+    setSearchQuery("");
+    setSearchResults([]);
+  };
+
+  const handleAddToCart = async (bookId: number) => {
+    try {
+      if (token) {
+        await addToCart(bookId, 1);
+        // const count = await getCartCount();
+        // setCartCount(count);
+        await refreshCartCount();
+      } else {
+        const sessionId = getSessionId();
+        await addToCartGuest(bookId, 1, sessionId);
+        const count = await getGuestCartCount();
+        setCartCount(count);
+      }
+      showSuccess("✅ Đã thêm vào giỏ hàng!");
+    } catch (error: any) {
+      console.error("❌ Lỗi khi thêm vào giỏ:", error?.response?.data || error);
+      showError("❌ Đã xảy ra lỗi khi thêm vào giỏ hàng.");
+    }
+  };
+
+  {isLoading && <div className="text-center py-4 text-sm text-gray-500">Đang tải dữ liệu...</div>}
+
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="container mx-auto px-4 py-2 bg-[#FDF8F5]">
+      <Suspense fallback={<SearchResultsSkeleton />}>
+            <SearchResults
+        searchQuery={searchQuery}
+        searchResults={searchResults}
+        onAddToCart={handleAddToCart}
+        onCloseSearch={handleCloseSearch}
+      /></Suspense>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
+<Suspense fallback={<BannerSkeleton />}><BannerSection /></Suspense>
+      
+<Suspense fallback={<FlashSaleSkeleton />}><FlashSaleSection onAddToCart={handleAddToCart} /></Suspense>
+      
+
+      {categories.slice(0, 2).map((category) => (
+        <Suspense key={category.id} fallback={<CategorySkeleton />}><CategorySection
+          key={category.id}
+          categoryName={category.name}
+          books={booksByCategoryMap[category.slug] || []}
+          onAddToCart={handleAddToCart}
+        /></Suspense>
+        
+      ))}
+
+      <div className="flex justify-center my-8">
+        <Link
+          href="/category"
+          className="text-xl font-semibold mb-4 text-[#5A2D0C] bg-[#FDF4ED] py-2 px-6 rounded-md shadow-sm text-center"
+          title="Xem tất cả danh mục"
+        >
+          Xem tất cả danh mục
+        </Link>
+      </div>
+
+      <div className="flex justify-center mt-6 gap-1 items-center">
         <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+          href="https://zaloapp.com/qr/p/1h5433h44fo2g"
           target="_blank"
           rel="noopener noreferrer"
+          className="fixed z-50 right-4 bottom-6 md:right-8 md:bottom-8 rounded-full shadow-lg bg-[#018fe0] hover:bg-[#006cb7] transition-colors p-3 flex items-center justify-center animate-bounce"
+          title="Chat Zalo"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
+          <ZaloIcon className="w-10 h-10" />
         </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      </div>
     </div>
   );
-}
+};
+
+export default Home;

@@ -1,0 +1,43 @@
+/* Đảm bảo các menu con hiển thị theo dạng dropdown */
+.relative {
+  position: relative;
+}
+
+.group:hover .group-hover\:block {
+  display: block;
+}
+
+.group-hover\:block {
+  display: none;
+}
+
+.absolute {
+  position: absolute;
+  left: 0;
+  top: 100%;
+}
+
+.bg-red-600 {
+  background-color: #e3342f;
+}
+
+.min-w- {
+  min-width: 200px;
+}
+
+/* Thiết lập chiều rộng của các menu con */
+.group:hover > .group-hover\:block {
+  display: block;
+}
+
+/* Chỉnh các menu con cho phù hợp */
+.group > .group-hover\:block > a {
+  display: block;
+  padding: 10px 15px;
+  color: white;
+  text-decoration: none;
+}
+
+.group > .group-hover\:block > a:hover {
+  background-color: #c53030;
+}

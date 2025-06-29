@@ -1,0 +1,22 @@
+/* Thanh cuộn tùy chỉnh */
+.scrollbar-custom::-webkit-scrollbar {
+  width: 1px;
+}
+
+.scrollbar-custom::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb {
+  background-color: #ced5dd; /* màu xám nhạt */
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background-clip: content-box;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb:hover {
+  background-color: #abb7c5; /* đậm hơn khi hover */
+}
+.scrollbar-custom {
+  scroll-behavior: smooth; /* Cuộn mượt */
+}
