@@ -2,13 +2,13 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## 🖥️ (demo) Giao diện người dùng
 
-![Trang chủ](public/images/trang-chu-phan-duoi.png)
-![Trang chủ](public/images/trang-chu-phan-tren.png)
-![Trang bài viết](public/images/trang-bai-viet.png)
+![Trang chủ](images/trang-chu-phan-duoi.png)
+![Trang chủ](images/trang-chu-phan-tren.png)
+![Trang bài viết](images/trang-bai-viet.png)
 
 ## ⚙️ (demo) Giao diện admin
 
-![Admin](public/images/trang-quan-li-sach.png)
+![Admin](images/trang-quan-li-sach.png)
 
 ## 📦 Tính năng chính
 
