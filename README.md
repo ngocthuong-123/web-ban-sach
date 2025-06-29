@@ -1,5 +1,32 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## 🖥️ (demo) Giao diện người dùng
+
+![Trang chủ](public/images/trang-chu-phan-duoi.png)
+![Trang chủ](public/images/trang-chu-phan-tren.png)
+![Trang bài viết](public/images/trang-bai-viet.png)
+
+## ⚙️ (demo) Giao diện admin
+
+![Admin](public/images/trang-quan-li-sach.png)
+
+## 📦 Tính năng chính
+
+    Trang chủ
+    Trang đăng nhập/đăng ký
+    Trang quản lý (Admin Dashboard)
+    Trang danh sách sản phẩm theo danh mục
+    Trang chi tiết sản phẩm
+    Trang giỏ hàng
+    Trang thanh toán
+    Trang người dùng (User Profile)
+    Trang thông báo
+    Trang đánh giá sản phẩm
+    Trang bài viết
+    Trang chi tiết bài viết
+    Trang khuyến mãi
+    Trang tạo đơn (nhân viên)
+
 ## Getting Started
 
 First, run the development server:
